@@ -1,0 +1,162 @@
+<html>
+  <head>
+    <title>Test</title>
+    <script src="jquery-1.9.1.js"></script>
+    <script src="jquery-ui.js"></script>
+    <script src="react-0.5.1.js"></script>
+    <script src="JSXTransformer-0.5.1.js"></script>
+	<style type="text/css">
+div.ui-menu li {
+    list-style:none;
+    background-image:none;
+    background-repeat:none;
+    background-position:0; 
+}
+ul
+{
+    list-style-type:none;
+    padding:0px;
+    margin:0px;
+}
+li
+{
+    background-image:url(sqpurple.gif);
+    background-repeat:no-repeat;
+    background-position:0px 5px; 
+    padding-left:14px;
+}
+#todo-list li.completed label {
+	color: #d9d9d9;
+	text-decoration: line-through;
+}
+</style>
+  </head>
+  <body>
+    <script type="text/jsx">
+      /** @jsx React.DOM */
+ 
+      function cloneWithProps(c) {
+         var newInstance = new c.constructor();
+        newInstance.construct(c.props);
+        return newInstance;
+      }
+ 
+ 
+ 
+      var SmartSortable = React.createClass({
+        getDefaultProps: function() {
+          return {component: React.DOM.ul, childComponent: React.DOM.li};
+        },
+ 
+        render: function() {
+          var component = this.props.component;
+          return this.transferPropsTo(<component />);
+        },
+ 
+        componentDidMount: function() {
+          jQuery(this.getDOMNode()).sortable({stop: this.handleDrop});
+          this.getChildren().forEach(function(child, i) {
+            jQuery(this.getDOMNode()).append('<' + this.props.childComponent.componentConstructor.displayName + ' />');
+            var node = jQuery(this.getDOMNode()).children().last()[0];
+            node.dataset.reactSortablePos = i;
+            React.renderComponent(cloneWithProps(child), node);
+          }.bind(this));
+        },
+ 
+        componentDidUpdate: function() {
+          var childIndex = 0;
+          var nodeIndex = 0;
+          var children = this.getChildren();
+          var nodes = jQuery(this.getDOMNode()).children();
+          var numChildren = children.length;
+          var numNodes = nodes.length;
+ 
+          while (childIndex < numChildren) {
+			
+            if (nodeIndex >= numNodes) {
+              jQuery(this.getDOMNode()).append('<' + this.props.childComponent.componentConstructor.displayName + '/>');
+              nodes.push(jQuery(this.getDOMNode()).children().last()[0]);
+              nodes[numNodes].dataset.reactSortablePos = numNodes;
+              numNodes++;
+            }
+			React.renderComponent(cloneWithProps(children[childIndex]), nodes[nodeIndex]);
+			
+            childIndex++;
+            nodeIndex++;
+          }
+ 
+          while (nodeIndex < numNodes) {
+            React.unmountComponentAtNode(nodes[nodeIndex]);
+            jQuery(nodes[nodeIndex]).remove();
+            nodeIndex++;
+          }
+        },
+
+ 
+        getChildren: function() {
+          // TODO: use mapChildren()
+          return this.props.children || [];
+        },
+ 
+        handleDrop: function() {
+          var newOrder = jQuery(this.getDOMNode()).children().get().map(function(child, i) {
+            var rv = child.dataset.reactSortablePos;
+            child.dataset.reactSortablePos = i;
+            return rv;
+          });
+          this.props.onSort(newOrder);
+        }
+      });
+ 
+      var App = React.createClass({
+	 getInitialState: function() {
+          return {items: ['Hello']};
+        },
+
+        handleAdd: function() {
+		  var newItems = this.state.items.concat(['Hello']);
+		      this.setState({items: newItems});
+        },
+        handleRemove: function() {
+          this.setState({items: this.state.items.slice(0, this.state.items.length - 1)});
+        },
+    handleToggle: function(event) {
+       alert('xxxxxxxx');
+    },
+	onClick: function(index) {
+		 alert('ccccccccc');
+		this.props.onTabClick(index);
+	},
+        render: function() {  
+	
+          var items = this.state.items.map(function(item) {
+            return <li><SmartSortable></SmartSortable><checkbox onTabClick={this.handleToggle}/>Hello Yani</li>;
+          });
+          return (
+            <div>
+              <h1>React Test</h1>
+              <SmartSortable>
+                {items}
+              </SmartSortable>
+
+              <p><button onClick={this.handleAdd}>Add an item</button></p>
+              <p><button onClick={this.handleRemove}>Remove an item</button></p>
+            </div>
+          );
+        }
+      });
+ 
+var checkbox = React.createClass({
+    render: function(){
+        return (
+			
+           <input type="checkbox"  onTabClick={this.handleToggle} title="test" ref="test" />
+        )
+    }
+});
+
+
+      React.renderComponent(<App />, document.body);
+    </script>
+  </body>
+</html>
